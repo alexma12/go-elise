@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alexma12/go-elise/internal/model"
+	"github.com/alexma12/go-elise/pkg/scrapedb"
 	"github.com/google/uuid"
 )
 
@@ -20,13 +20,13 @@ type MySQLScrapeConfig struct {
 	UpdatedAt         time.Time
 }
 
-func (sc MySQLScrapeConfig) toScrapeConfig() model.ScrapeConfig {
-	return model.ScrapeConfig{
+func (sc MySQLScrapeConfig) toScrapeConfig() scrapedb.ScrapeConfig {
+	return scrapedb.ScrapeConfig{
 		ID:        sc.ID,
 		Name:      sc.Name,
 		Url:       sc.Url,
 		Selector:  sc.Selector,
-		Type:      model.TargetType(sc.Type),
+		Type:      scrapedb.TargetType(sc.Type),
 		CreatedAt: sc.CreatedAt,
 	}
 }
@@ -37,8 +37,8 @@ type MySQLScrapeLog struct {
 	ExecutedAt time.Time
 }
 
-func (sl MySQLScrapeLog) toScrapeLog() model.ScrapeLog {
-	return model.ScrapeLog{
+func (sl MySQLScrapeLog) toScrapeLog() scrapedb.ScrapeLog {
+	return scrapedb.ScrapeLog{
 		ID:         sl.ID,
 		Value:      sl.Value,
 		ExecutedAt: sl.ExecutedAt,
@@ -53,7 +53,7 @@ func New(db *sql.DB) *MySQLScrapeDB {
 	return &MySQLScrapeDB{DB: db}
 }
 
-func (ms *MySQLScrapeDB) CreateStorage() error {
+func (ms *MySQLScrapeDB) CreateTables() error {
 	stmt := `USE elise;`
 	_, err := ms.DB.Exec(stmt)
 	if err != nil {
@@ -90,7 +90,7 @@ func (ms *MySQLScrapeDB) CreateStorage() error {
 	return nil
 }
 
-func (ms *MySQLScrapeDB) AddConfig(id uuid.UUID, name, url, selector string, targetType model.TargetType, requiresWebDriver bool) error {
+func (ms *MySQLScrapeDB) AddConfig(id uuid.UUID, name, url, selector string, targetType scrapedb.TargetType, requiresWebDriver bool) error {
 	stmt := `INSERT INTO scrape_configs (id, name, url, selector, type, requiresWebDriver, createdAt, updatedAt)
              VALUES(UUID_TO_BIN(?), ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())`
 	_, err := ms.DB.Exec(stmt, id, name, url, selector, targetType, requiresWebDriver)
@@ -100,7 +100,7 @@ func (ms *MySQLScrapeDB) AddConfig(id uuid.UUID, name, url, selector string, tar
 	return nil
 }
 
-func (ms *MySQLScrapeDB) ListConfigs() ([]model.ScrapeConfig, error) {
+func (ms *MySQLScrapeDB) ListConfigs() ([]scrapedb.ScrapeConfig, error) {
 	stmt := `SELECT * FROM scrape_configs`
 	rows, err := ms.DB.Query(stmt)
 	if err != nil {
@@ -108,7 +108,7 @@ func (ms *MySQLScrapeDB) ListConfigs() ([]model.ScrapeConfig, error) {
 	}
 	defer rows.Close()
 
-	configs := []model.ScrapeConfig{}
+	configs := []scrapedb.ScrapeConfig{}
 	for rows.Next() {
 		var c MySQLScrapeConfig
 		if err := rows.Scan(&c.ID, &c.Name, &c.Url, &c.Selector, &c.Type, &c.RequiresWebDriver, &c.CreatedAt, &c.UpdatedAt); err != nil {
@@ -118,10 +118,6 @@ func (ms *MySQLScrapeDB) ListConfigs() ([]model.ScrapeConfig, error) {
 	}
 
 	return configs, nil
-}
-
-func (ms *MySQLScrapeDB) UpdateConfig() {
-
 }
 
 func (ms *MySQLScrapeDB) DeleteConfig(id uuid.UUID) (bool, error) {

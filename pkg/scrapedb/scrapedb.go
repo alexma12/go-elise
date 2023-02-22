@@ -1,4 +1,4 @@
-package model
+package scrapedb
 
 import (
 	"time"
@@ -30,8 +30,8 @@ type ScrapeLog struct {
 	ExecutedAt time.Time
 }
 
-type ScrapeStorage interface {
-	CreateStorage() error
+type ScrapeDB interface {
+	CreateTables() error
 	AddConfig(id uuid.UUID, name, url, selector string, targetType TargetType, requiresWebDriver bool) error
 	ListConfigs() ([]ScrapeConfig, error)
 	DeleteConfig(id uuid.UUID) (bool, error)

@@ -11,8 +11,8 @@ import (
 	"os"
 
 	"github.com/alexma12/go-elise/config"
-	"github.com/alexma12/go-elise/internal/engine/administrator"
-	"github.com/alexma12/go-elise/internal/mysql"
+	"github.com/alexma12/go-elise/pkg/administrator"
+	"github.com/alexma12/go-elise/pkg/scrapedb/mysql"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,6 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "start the scraper engine",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 		infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 
@@ -32,14 +31,9 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		defer mysqlDB.Close()
-		scrapedb := mysql.New(mysqlDB)
+		db := mysql.New(mysqlDB)
 
-		infoLog.Println("Initializing Scheduler...")
-
-		infoLog.Println("Initializing Scraper...")
-
-		infoLog.Println("Starting Administrator...")
-		admin := administrator.New(scrapedb, errorLog, infoLog)
+		admin := administrator.New(db, errorLog, infoLog)
 		admin.Start()
 	},
 }

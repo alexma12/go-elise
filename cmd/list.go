@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/alexma12/go-elise/internal/model"
+	"github.com/alexma12/go-elise/pkg/scrapedb"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ var listCmd = &cobra.Command{
 		defer resp.Body.Close()
 
 		decoder := json.NewDecoder(resp.Body)
-		var configs []model.ScrapeConfig
+		var configs []scrapedb.ScrapeConfig
 
 		err = decoder.Decode(&configs)
 		if err != nil {
