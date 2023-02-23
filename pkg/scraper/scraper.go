@@ -1,7 +1,7 @@
 package scraper
 
-import "github.com/alexma12/go-elise/pkg/scrapedb"
+import "github.com/alexma12/go-elise/pkg/model"
 
 type Scraper struct {
-	config scrapedb.ScrapeConfig
+	config model.ScrapeConfig
 }

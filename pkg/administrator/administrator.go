@@ -3,6 +3,7 @@
 package administrator
 
 import (
+	"context"
 	"log"
 
 	"github.com/alexma12/go-elise/pkg/model"
@@ -34,15 +35,22 @@ func New(db scrapeDB, errorLog, infoLog *log.Logger) *admin {
 }
 
 func (a *admin) Start() {
-	a.infoLog.Println("Admin: Initializing Scheduler...")
-
 	err := a.scrapeDB.CreateTables()
 	if err != nil {
 		a.errorLog.Println(err)
 		return
 	}
-	server := a.initServer()
 
+	a.infoLog.Println("Admin: Initializing Scheduler...")
+	configs, err := a.scrapeDB.ListConfigs()
+	if err != nil {
+		a.errorLog.Printf("error occured when fetching all configs %s", err)
+		configs = []model.ScrapeConfig{}
+	}
+	sched := scheduler.New(a.errorLog, a.infoLog, configs)
+	sched.Start(context.TODO())
+
+	server := a.initServer()
 	a.infoLog.Printf("Admin: Starting server on port: %s", "3030")
 	a.errorLog.Fatal(server.Start(":3030"))
 }
