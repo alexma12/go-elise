@@ -12,7 +12,7 @@ import (
 
 	"github.com/alexma12/go-elise/config"
 	"github.com/alexma12/go-elise/pkg/administrator"
-	"github.com/alexma12/go-elise/pkg/scrapedb/mysql"
+	"github.com/alexma12/go-elise/pkg/db/mysql"
 	"github.com/spf13/cobra"
 )
 

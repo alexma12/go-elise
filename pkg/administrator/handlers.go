@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/alexma12/go-elise/pkg/scrapedb"
+	"github.com/alexma12/go-elise/pkg/model"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 func (a *admin) addConfig(c echo.Context) error {
-	var config scrapedb.ScrapeConfig
+	var config model.ScrapeConfig
 	if err := c.Bind(&config); err != nil {
 		return c.String(http.StatusBadRequest, "Invalid scrapeConfig")
 	}

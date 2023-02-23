@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alexma12/go-elise/pkg/scrapedb"
+	"github.com/alexma12/go-elise/pkg/model"
 	"github.com/google/uuid"
 )
 
@@ -20,13 +20,13 @@ type MySQLScrapeConfig struct {
 	UpdatedAt         time.Time
 }
 
-func (sc MySQLScrapeConfig) toScrapeConfig() scrapedb.ScrapeConfig {
-	return scrapedb.ScrapeConfig{
+func (sc MySQLScrapeConfig) toScrapeConfig() model.ScrapeConfig {
+	return model.ScrapeConfig{
 		ID:        sc.ID,
 		Name:      sc.Name,
 		Url:       sc.Url,
 		Selector:  sc.Selector,
-		Type:      scrapedb.TargetType(sc.Type),
+		Type:      model.TargetType(sc.Type),
 		CreatedAt: sc.CreatedAt,
 	}
 }
@@ -37,8 +37,8 @@ type MySQLScrapeLog struct {
 	ExecutedAt time.Time
 }
 
-func (sl MySQLScrapeLog) toScrapeLog() scrapedb.ScrapeLog {
-	return scrapedb.ScrapeLog{
+func (sl MySQLScrapeLog) toScrapeLog() model.ScrapeLog {
+	return model.ScrapeLog{
 		ID:         sl.ID,
 		Value:      sl.Value,
 		ExecutedAt: sl.ExecutedAt,
@@ -90,7 +90,7 @@ func (ms *MySQLScrapeDB) CreateTables() error {
 	return nil
 }
 
-func (ms *MySQLScrapeDB) AddConfig(id uuid.UUID, name, url, selector string, targetType scrapedb.TargetType, requiresWebDriver bool) error {
+func (ms *MySQLScrapeDB) AddConfig(id uuid.UUID, name, url, selector string, targetType model.TargetType, requiresWebDriver bool) error {
 	stmt := `INSERT INTO scrape_configs (id, name, url, selector, type, requiresWebDriver, createdAt, updatedAt)
              VALUES(UUID_TO_BIN(?), ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())`
 	_, err := ms.DB.Exec(stmt, id, name, url, selector, targetType, requiresWebDriver)
@@ -100,7 +100,7 @@ func (ms *MySQLScrapeDB) AddConfig(id uuid.UUID, name, url, selector string, tar
 	return nil
 }
 
-func (ms *MySQLScrapeDB) ListConfigs() ([]scrapedb.ScrapeConfig, error) {
+func (ms *MySQLScrapeDB) ListConfigs() ([]model.ScrapeConfig, error) {
 	stmt := `SELECT * FROM scrape_configs`
 	rows, err := ms.DB.Query(stmt)
 	if err != nil {
@@ -108,7 +108,7 @@ func (ms *MySQLScrapeDB) ListConfigs() ([]scrapedb.ScrapeConfig, error) {
 	}
 	defer rows.Close()
 
-	configs := []scrapedb.ScrapeConfig{}
+	configs := []model.ScrapeConfig{}
 	for rows.Next() {
 		var c MySQLScrapeConfig
 		if err := rows.Scan(&c.ID, &c.Name, &c.Url, &c.Selector, &c.Type, &c.RequiresWebDriver, &c.CreatedAt, &c.UpdatedAt); err != nil {

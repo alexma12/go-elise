@@ -5,18 +5,27 @@ package administrator
 import (
 	"log"
 
-	"github.com/alexma12/go-elise/pkg/scrapedb"
+	"github.com/alexma12/go-elise/pkg/model"
+	"github.com/alexma12/go-elise/pkg/scheduler"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
+type scrapeDB interface {
+	CreateTables() error
+	AddConfig(id uuid.UUID, name, url, selector string, targetType model.TargetType, requiresWebDriver bool) error
+	ListConfigs() ([]model.ScrapeConfig, error)
+	DeleteConfig(id uuid.UUID) (bool, error)
+}
+
 type admin struct {
-	scrapeDB scrapedb.ScrapeDB
+	scrapeDB scrapeDB
 	errorLog *log.Logger
 	infoLog  *log.Logger
 }
 
-func New(db scrapedb.ScrapeDB, errorLog, infoLog *log.Logger) *admin {
+func New(db scrapeDB, errorLog, infoLog *log.Logger) *admin {
 	return &admin{
 		scrapeDB: db,
 		errorLog: errorLog,

@@ -14,10 +14,12 @@ import (
 )
 
 var configToAdd = struct {
-	Name              string
-	Url               string
-	Selector          string
-	Type              int
+	Name     string
+	Url      string
+	Selector string
+	Type     int
+	// TODO add interval to model
+	// Interval          int
 	RequiresWebDriver bool
 }{}
 
