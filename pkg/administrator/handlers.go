@@ -22,6 +22,7 @@ func (a *admin) addConfig(c echo.Context) error {
 	}
 	config.ID = id
 
+	a.scrapeScheduler.AddJob(config)
 	a.infoLog.Printf("created config with id : %s", id)
 	return c.JSON(http.StatusCreated, config)
 }
@@ -51,6 +52,7 @@ func (a *admin) deleteConfig(c echo.Context) error {
 	}
 
 	if deleted {
+		a.scrapeScheduler.DeleteJob(id)
 		a.infoLog.Printf("Admin: Deleted Config with ID: %s", id)
 		return c.JSON(http.StatusOK, "Successfully deleted")
 	} else {

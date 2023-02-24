@@ -41,15 +41,17 @@ type jobQueue struct {
 	addJobChan <-chan *scrapeJob
 }
 
-func NewJobQueue(addJobChan <-chan *scrapeJob, jobs pendingJobs) *jobQueue {
-	heap.Init(&jobs)
+func NewJobQueue(addJobChan <-chan *scrapeJob) *jobQueue {
 	return &jobQueue{
-		pending:    &jobs,
+		pending:    &pendingJobs{},
 		addJobChan: addJobChan,
 	}
 }
 
-func (q *jobQueue) Start(ctx context.Context) <-chan *scrapeJob {
+func (q *jobQueue) Start(ctx context.Context, initalJobs pendingJobs) <-chan *scrapeJob {
+	heap.Init(&initalJobs)
+	q.pending = &initalJobs
+
 	ready := make(chan *scrapeJob, 10)
 	go func() {
 		defer close(ready)
@@ -67,7 +69,7 @@ func (q *jobQueue) Start(ctx context.Context) <-chan *scrapeJob {
 			default:
 				for q.pending.Len() != 0 && q.pending.Peek().isDue() {
 					j := heap.Pop(q.pending).(*scrapeJob)
-					fmt.Printf("Ready to execute: %v at %v\n", j.scrapeConfig.ID, j.executeTime.String())
+					fmt.Printf("Ready to execute: %v at %v\n", j.scrapeConfig.Name, j.executeTime.String())
 					ready <- j
 				}
 				time.Sleep(1 * time.Second)

@@ -25,26 +25,15 @@ type ScrapeScheduler struct {
 	infoLog  *log.Logger
 }
 
-func New(errorLog, infoLog *log.Logger, scrapeConfigs []model.ScrapeConfig) *ScrapeScheduler {
-	configs := map[uuid.UUID]model.ScrapeConfig{}
-	for _, c := range scrapeConfigs {
-		configs[c.ID] = c
-	}
-
-	jobs := make([]*scrapeJob, len(scrapeConfigs))
-	for i, c := range scrapeConfigs {
-		// TODO: add some sort of randomized delay
-		jobs[i] = NewScrapeJob(c)
-	}
-
+func New(errorLog, infoLog *log.Logger) *ScrapeScheduler {
 	addJobChan := make(chan *scrapeJob, 10)
-	jobQueue := NewJobQueue(addJobChan, jobs)
+	jobQueue := NewJobQueue(addJobChan)
 
 	executeJobChan := make(chan *scrapeJob, 10)
 	jobExecutor := NewJobExecutor(executeJobChan)
 
 	return &ScrapeScheduler{
-		scrapeConfigs:  configs,
+		scrapeConfigs:  make(map[uuid.UUID]model.ScrapeConfig),
 		jobQueue:       jobQueue,
 		jobExecutor:    jobExecutor,
 		addJobChan:     addJobChan,
@@ -54,7 +43,16 @@ func New(errorLog, infoLog *log.Logger, scrapeConfigs []model.ScrapeConfig) *Scr
 	}
 }
 
-func (s *ScrapeScheduler) Start(ctx context.Context) {
+func (s *ScrapeScheduler) Start(ctx context.Context, scrapeConfigs []model.ScrapeConfig) {
+	for _, c := range scrapeConfigs {
+		s.scrapeConfigs[c.ID] = c
+	}
+	initialJobs := make([]*scrapeJob, len(scrapeConfigs))
+	for i, c := range scrapeConfigs {
+		// TODO: add some sort of randomized delay
+		initialJobs[i] = NewScrapeJob(c)
+	}
+
 	go func() {
 		defer close(s.addJobChan)
 		defer close(s.executeJobChan)
@@ -62,7 +60,7 @@ func (s *ScrapeScheduler) Start(ctx context.Context) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		readyJobs := s.jobQueue.Start(ctx)
+		readyJobs := s.jobQueue.Start(ctx, initialJobs)
 		finishedJobs := s.jobExecutor.Start(ctx)
 		for {
 			select {

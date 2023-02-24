@@ -31,7 +31,7 @@ func (j *jobExecutor) Start(ctx context.Context) <-chan *scrapeJob {
 					fmt.Println("execute job channel cancelled")
 				}
 				time.Sleep(8 * time.Second)
-				fmt.Printf("Finished executing: %v \n", exec.scrapeConfig.ID)
+				fmt.Printf("Finished executing: %v \n", exec.scrapeConfig.Name)
 				finished <- exec
 			}
 		}

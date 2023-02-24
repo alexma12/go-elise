@@ -21,16 +21,18 @@ type scrapeDB interface {
 }
 
 type admin struct {
-	scrapeDB scrapeDB
-	errorLog *log.Logger
-	infoLog  *log.Logger
+	scrapeDB        scrapeDB
+	scrapeScheduler *scheduler.ScrapeScheduler
+	errorLog        *log.Logger
+	infoLog         *log.Logger
 }
 
 func New(db scrapeDB, errorLog, infoLog *log.Logger) *admin {
 	return &admin{
-		scrapeDB: db,
-		errorLog: errorLog,
-		infoLog:  infoLog,
+		scrapeDB:        db,
+		scrapeScheduler: scheduler.New(errorLog, infoLog),
+		errorLog:        errorLog,
+		infoLog:         infoLog,
 	}
 }
 
@@ -47,8 +49,7 @@ func (a *admin) Start() {
 		a.errorLog.Printf("error occured when fetching all configs %s", err)
 		configs = []model.ScrapeConfig{}
 	}
-	sched := scheduler.New(a.errorLog, a.infoLog, configs)
-	sched.Start(context.TODO())
+	a.scrapeScheduler.Start(context.TODO(), configs)
 
 	server := a.initServer()
 	a.infoLog.Printf("Admin: Starting server on port: %s", "3030")

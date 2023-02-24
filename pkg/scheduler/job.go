@@ -10,7 +10,7 @@ func NewScrapeJob(config model.ScrapeConfig) *scrapeJob {
 	return &scrapeJob{
 		scrapeConfig: config,
 		// TODO: currently time.Second for testing purposes, need to change to time.Minute
-		executeTime: time.Now().Add(time.Duration(config.Interval) * time.Second),
+		executeTime: time.Now().Add(time.Duration(config.Interval) * 10 * time.Second),
 	}
 }
 
