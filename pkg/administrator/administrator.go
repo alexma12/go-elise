@@ -15,7 +15,7 @@ import (
 
 type scrapeDB interface {
 	CreateTables() error
-	AddConfig(id uuid.UUID, name, url, selector string, targetType model.TargetType, requiresWebDriver bool) error
+	AddConfig(id uuid.UUID, name, url, selector string, targetType model.TargetType, interval int, requiresWebDriver bool) error
 	ListConfigs() ([]model.ScrapeConfig, error)
 	DeleteConfig(id uuid.UUID) (bool, error)
 }

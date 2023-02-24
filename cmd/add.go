@@ -14,12 +14,11 @@ import (
 )
 
 var configToAdd = struct {
-	Name     string
-	Url      string
-	Selector string
-	Type     int
-	// TODO add interval to model
-	// Interval          int
+	Name              string
+	Url               string
+	Selector          string
+	Type              int
+	Interval          int
 	RequiresWebDriver bool
 }{}
 
@@ -32,6 +31,8 @@ var addCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalln(err)
 		}
+		// TODO add config initizliation workflow
+
 		resp, err := http.Post("http://localhost:3030/elise/config/add", "application/json", bytes.NewBuffer(configJson))
 		if err != nil {
 			log.Fatalln(err)
@@ -53,14 +54,20 @@ func init() {
 	addCmd.Flags().StringVarP(&configToAdd.Name, "name", "n", "", "Name of scrap configuration")
 	addCmd.MarkFlagRequired("name")
 
+	// TODO add validation
 	addCmd.Flags().StringVarP(&configToAdd.Url, "url", "u", "", "Url to accecss scrape contents")
 	addCmd.MarkFlagRequired("url")
 
 	addCmd.Flags().StringVarP(&configToAdd.Selector, "selector", "s", "", "Selector to accecss scrape contents")
 	addCmd.MarkFlagRequired("selector")
 
+	// TODO add validation
 	addCmd.Flags().IntVarP(&configToAdd.Type, "type", "t", 0, "The type of scrape contents:\n0 - number\n1 - string")
 	addCmd.MarkFlagRequired("type")
+
+	// TODO add validation
+	addCmd.Flags().IntVarP(&configToAdd.Interval, "interval", "i", 30, "The time in minutes between each run of the scraper")
+	addCmd.MarkFlagRequired("interval")
 
 	addCmd.Flags().BoolVarP(&configToAdd.RequiresWebDriver, "requiresWebDriver", "w", false, "Whether the scraper needs to use a web driver to access the contents")
 	addCmd.MarkFlagRequired("requiresWebDriver")

@@ -5,11 +5,9 @@ import (
 	"context"
 	"fmt"
 	"time"
-
-	"github.com/google/uuid"
 )
 
-type pendingJobs []scrapeJob
+type pendingJobs []*scrapeJob
 
 func (pjs pendingJobs) Len() int {
 	return len(pjs)
@@ -23,8 +21,8 @@ func (pjs pendingJobs) Less(i, j int) bool {
 	return pjs[i].executeTime.Before(pjs[j].executeTime)
 }
 
-func (pjs *pendingJobs) Peek() any {
-	return (*pjs)[0]
+func (pjs pendingJobs) Peek() *scrapeJob {
+	return pjs[0]
 }
 
 func (pjs *pendingJobs) Pop() any {
@@ -35,15 +33,15 @@ func (pjs *pendingJobs) Pop() any {
 }
 
 func (pjs *pendingJobs) Push(x any) {
-	*pjs = append(*pjs, x.(scrapeJob))
+	*pjs = append(*pjs, x.(*scrapeJob))
 }
 
 type jobQueue struct {
 	pending    *pendingJobs
-	addJobChan <-chan uuid.UUID
+	addJobChan <-chan *scrapeJob
 }
 
-func NewJobQueue(addJobChan <-chan uuid.UUID, jobs pendingJobs) *jobQueue {
+func NewJobQueue(addJobChan <-chan *scrapeJob, jobs pendingJobs) *jobQueue {
 	heap.Init(&jobs)
 	return &jobQueue{
 		pending:    &jobs,
@@ -51,8 +49,8 @@ func NewJobQueue(addJobChan <-chan uuid.UUID, jobs pendingJobs) *jobQueue {
 	}
 }
 
-func (q *jobQueue) Start(ctx context.Context) <-chan uuid.UUID {
-	ready := make(chan uuid.UUID)
+func (q *jobQueue) Start(ctx context.Context) <-chan *scrapeJob {
+	ready := make(chan *scrapeJob, 10)
 	go func() {
 		defer close(ready)
 		for {
@@ -60,12 +58,17 @@ func (q *jobQueue) Start(ctx context.Context) <-chan uuid.UUID {
 			case <-ctx.Done():
 				fmt.Println("cancelled")
 				return
-			case j := <-q.addJobChan:
+			case j, ok := <-q.addJobChan:
+				if !ok {
+					fmt.Println("add job channel cancelled")
+					return
+				}
 				heap.Push(q.pending, j)
 			default:
-				for q.pending.Len() != 0 && q.pending.Peek().(scrapeJob).isDue() {
-					j := heap.Pop(q.pending).(scrapeJob)
-					fmt.Printf("TODO: execute: %v \n", j.id)
+				for q.pending.Len() != 0 && q.pending.Peek().isDue() {
+					j := heap.Pop(q.pending).(*scrapeJob)
+					fmt.Printf("Ready to execute: %v at %v\n", j.scrapeConfig.ID, j.executeTime.String())
+					ready <- j
 				}
 				time.Sleep(1 * time.Second)
 			}

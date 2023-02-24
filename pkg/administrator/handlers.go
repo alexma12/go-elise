@@ -15,11 +15,13 @@ func (a *admin) addConfig(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Invalid scrapeConfig")
 	}
 	id := uuid.New()
-	err := a.scrapeDB.AddConfig(id, config.Name, config.Url, config.Selector, config.Type, config.RequiresWebDriver)
+	err := a.scrapeDB.AddConfig(id, config.Name, config.Url, config.Selector, config.Type, config.Interval, config.RequiresWebDriver)
 	if err != nil {
+		a.errorLog.Printf("error trying to add config:  %s\n", err)
 		return c.String(http.StatusInternalServerError, "Could not create config")
 	}
 	config.ID = id
+
 	a.infoLog.Printf("created config with id : %s", id)
 	return c.JSON(http.StatusCreated, config)
 }
@@ -27,6 +29,7 @@ func (a *admin) addConfig(c echo.Context) error {
 func (a *admin) listConfigs(c echo.Context) error {
 	configs, err := a.scrapeDB.ListConfigs()
 	if err != nil {
+		a.errorLog.Printf("error trying to list configs:  %s\n", err)
 		return c.String(http.StatusInternalServerError, "Could not get configs")
 	}
 
@@ -38,14 +41,12 @@ func (a *admin) deleteConfig(c echo.Context) error {
 	idParam := c.QueryParams().Get("id")
 	id, err := uuid.Parse(idParam)
 	if err != nil {
-		a.errorLog.Println(err)
 		return c.String(http.StatusInternalServerError, fmt.Sprintf("Invalid ID received %s", idParam))
 	}
-	fmt.Println(id)
 
 	deleted, err := a.scrapeDB.DeleteConfig(id)
 	if err != nil {
-		a.errorLog.Println(err)
+		a.errorLog.Printf("error trying to delete config:  %s\n", err)
 		return c.String(http.StatusInternalServerError, "Could not delete config")
 	}
 

@@ -20,6 +20,7 @@ type ScrapeConfig struct {
 	Url               string
 	Selector          string
 	Type              TargetType
+	Interval          int
 	RequiresWebDriver bool
 	CreatedAt         time.Time
 }

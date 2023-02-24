@@ -15,9 +15,9 @@ type MySQLScrapeConfig struct {
 	Url               string
 	Selector          string
 	Type              int
+	Interval          int
 	RequiresWebDriver bool
 	CreatedAt         time.Time
-	UpdatedAt         time.Time
 }
 
 func (sc MySQLScrapeConfig) toScrapeConfig() model.ScrapeConfig {
@@ -27,6 +27,7 @@ func (sc MySQLScrapeConfig) toScrapeConfig() model.ScrapeConfig {
 		Url:       sc.Url,
 		Selector:  sc.Selector,
 		Type:      model.TargetType(sc.Type),
+		Interval:  sc.Interval,
 		CreatedAt: sc.CreatedAt,
 	}
 }
@@ -67,9 +68,9 @@ func (ms *MySQLScrapeDB) CreateTables() error {
         url VARCHAR(2048) NOT NULL,
         selector VARCHAR(1024) NOT NULL,
         type INT NOT NULL,
+		interval_minutes INT NOT NULL,
         requiresWebDriver BOOLEAN NOT NULL,
-        createdAt TIMESTAMP NOT NULL,
-        updatedAt TIMESTAMP NOT NULL
+        createdAt TIMESTAMP NOT NULL
     )`
 	_, err = ms.DB.Exec(stmt)
 	if err != nil {
@@ -90,10 +91,10 @@ func (ms *MySQLScrapeDB) CreateTables() error {
 	return nil
 }
 
-func (ms *MySQLScrapeDB) AddConfig(id uuid.UUID, name, url, selector string, targetType model.TargetType, requiresWebDriver bool) error {
-	stmt := `INSERT INTO scrape_configs (id, name, url, selector, type, requiresWebDriver, createdAt, updatedAt)
-             VALUES(UUID_TO_BIN(?), ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())`
-	_, err := ms.DB.Exec(stmt, id, name, url, selector, targetType, requiresWebDriver)
+func (ms *MySQLScrapeDB) AddConfig(id uuid.UUID, name, url, selector string, targetType model.TargetType, interval int, requiresWebDriver bool) error {
+	stmt := `INSERT INTO scrape_configs (id, name, url, selector, type, interval_minutes, requiresWebDriver, createdAt)
+             VALUES(UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`
+	_, err := ms.DB.Exec(stmt, id, name, url, selector, targetType, interval, requiresWebDriver)
 	if err != nil {
 		return err
 	}
@@ -111,7 +112,7 @@ func (ms *MySQLScrapeDB) ListConfigs() ([]model.ScrapeConfig, error) {
 	configs := []model.ScrapeConfig{}
 	for rows.Next() {
 		var c MySQLScrapeConfig
-		if err := rows.Scan(&c.ID, &c.Name, &c.Url, &c.Selector, &c.Type, &c.RequiresWebDriver, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.Url, &c.Selector, &c.Type, &c.Interval, &c.RequiresWebDriver, &c.CreatedAt); err != nil {
 			return nil, err
 		}
 		configs = append(configs, c.toScrapeConfig())
